@@ -6,13 +6,15 @@
 /*   By: welee <welee@student.42singapore.sg>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/24 14:58:18 by welee             #+#    #+#             */
-/*   Updated: 2024/09/24 15:09:16 by welee            ###   ########.fr       */
+/*   Updated: 2024/09/24 18:22:02 by welee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 /* shell.c */
 
 #include "minishell.h"
+#include "token.h"
+#include "command.h"
 
 void	handle_sigint(int sig)
 {
@@ -45,10 +47,37 @@ void	setup_signal_handlers(void)
 	sigaction(SIGQUIT, &sa_quit, NULL);
 }
 
+void	run_command(t_command *cmd)
+{
+	int	i;
+
+	if (cmd->cmd)
+		printf("Running command: %s\n", cmd->cmd);
+	if (cmd->args)
+	{
+		i = 0;
+		while (cmd->args[i])
+		{
+			printf("Arg %d: %s\n", i, cmd->args[i]);
+			i++;
+		}
+	}
+	if (cmd->input_file)
+		printf("Input file: %s\n", cmd->input_file);
+	if (cmd->output_file)
+		printf("Output file: %s\n", cmd->output_file);
+	if (cmd->append)
+		printf("Appending to file\n");
+	if (cmd->heredoc)
+		printf("Using heredoc\n");
+}
+
 void	start_shell(void)
 {
-	char	*input;
-	char	*prompt;
+	char		*input;
+	char		*prompt;
+	t_token		*tokens;
+	t_command	*cmd;
 
 	prompt = "minishell$ ";
 	setup_signal_handlers();
@@ -61,8 +90,12 @@ void	start_shell(void)
 			break ;
 		}
 		if (*input)
+		{
 			add_history(input);
-		/* Placeholder for command execution */
+			tokens = lexer(input);
+			cmd = parser(tokens);
+			run_command(cmd);
+		}
 		free(input);
 	}
 }
